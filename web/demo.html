@@ -1,0 +1,126 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>SenseTime Demo</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<script type="text/javascript" src="./js/fingerprint.js"></script>
+<script type="text/javascript" src="./js/tts.min.js"></script>
+<script>
+	var failed = 0, maxTries = 100;
+	// 创建一个Socket实例
+	var mySocket;
+	var url = 'ws://localhost:8888/wss?id=APK';
+	var timer;
+
+	var audioPalyUrl = "http://h5.xf-yun.com/audioStream/";	
+	var session = new IFlyTtsSession({
+		'url'                : 'ws://h5.xf-yun.com/tts.do',
+		'reconnection'       : true,
+		'reconnectionDelay'  : 30000
+	});
+	window.iaudio = null;
+	var audio_state = 0;
+	
+	function play(content, vcn){
+	    reset();
+		ssb_param = {"appid": '58edf6d5', "appkey":"d3a665a8f612d9a7", "synid":"12345", "params" : "ent=aisound,aue=lame,spd=6,vcn="+vcn};
+		session.start(ssb_param, content, function (err, obj)
+		{
+			var audio_url = audioPalyUrl + obj.audio_url;
+			if( audio_url != null && audio_url != undefined )
+			{
+				window.iaudio.src = audio_url;
+				window.iaudio.play();
+			}
+		});
+	};
+	function reset()
+	{
+		audio_array = [];	 
+		audio_state = 0;
+		if(window.iaudio != null)
+		{
+			window.iaudio.pause();
+		}
+		window.iaudio = new Audio();
+		window.iaudio.src = '';
+		//window.iaudio.play();
+	};
+
+	
+
+	function connect(){
+		document.title = 'Connecting...';
+		console.log(document.title);
+		mySocket = new WebSocket(url);
+	}
+
+	function reconnect(){
+		document.title = 'Try to reconnect ... (failed: ' + failed + ')';
+		console.log(document.title);
+		timer = window.setTimeout(connect, 100);
+	}
+	
+	
+	document.addEventListener('readystatechange', function(e) {
+		if (document.readyState == 'complete') {
+			connect();
+
+			// 打开Socket
+			mySocket.onopen = function(event) {
+				document.title = 'Connected.';		
+				failed = 0;
+				clearTimeout(timer);
+				mySocket.send('Hello, WebSocket!');
+			};
+			// 监听消息
+			mySocket.onmessage = function(event) {
+				console.log('<< ', event.data);
+				var greeting = event.data;
+				play(greeting, 'vixr');
+				var now = new Date();
+				document.getElementById('message').innerHTML ="Time "+ now.getHours() + ": " +now.getMinutes()+ ": "+now.getSeconds()+ ": "+ greeting + '<br/>';
+		
+			};
+			// 监听Socket的关闭
+			mySocket.onclose = function(event) {
+				document.title = 'Client Closed: ' + event.code;
+				if(failed++ < maxTries){
+					reconnect();
+				}
+				else{
+					document.title = 'Gived up.'
+				}
+			};
+
+			window.onbeforeunload = function(e) {
+				mySocket.close();
+				return false;
+			};
+		}
+	});
+	
+</script>
+<style type="text/css">
+body
+{
+background:black;
+text-align:center;
+}
+#message
+{
+color:white; 
+font-size:30px;
+position: absolute;
+top: 50%;
+height: 240px;
+width:95%;
+margin-top: -120px; 
+}
+</style> 
+</head>
+<body>
+		<div id="message" >你好,好久不见啊</div>
+</body>
+
+</html>
