@@ -35,8 +35,7 @@ public class Demo implements Runnable {
 
 	private static final Logger logger = LoggerFactory.getLogger(Demo.class);
 
-//	private String facesImagePath = "/Users/Hao/Documents/Workspace/SenseTimeDemo/faces";
-//	private String searchPath = "/Users/Hao/Documents/Workspace/SenseTimeDemo/search";
+
 //	private String personsPath = "D:/Neonworkspace/SenseTimeDemo/persons";
 
 	private URI sensetimeServer;
